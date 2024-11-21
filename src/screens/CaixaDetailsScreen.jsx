@@ -1,158 +1,161 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Card, Surface } from 'react-native-paper';
 
 export default function CaixaDetailsScreen({ route, navigation }) {
-  const { box } = route.params; // Pega a caixinha que foi passada
+  const { box } = route.params;
   const [amount, setAmount] = useState('');
 
-  // Função para adicionar valor à caixinha
   const handleAddToBox = async () => {
     if (!amount || isNaN(amount)) {
       alert('Digite um valor válido.');
       return;
     }
 
-    try {
-      const storedBoxes = await AsyncStorage.getItem('boxes');
-      const boxes = storedBoxes ? JSON.parse(storedBoxes) : [];
+    const balance = await AsyncStorage.getItem('balance');
+    const updatedBalance = parseFloat(balance) - parseFloat(amount);
+    await AsyncStorage.setItem('balance', updatedBalance.toString());
 
-      const updatedBoxes = boxes.map((item) => {
-        if (item.id === box.id) {
-          item.balance = (item.balance || 0) + parseFloat(amount);
-        }
-        return item;
-      });
+    const newTransaction = {
+      amount: parseFloat(amount),
+      type: 'subtract',
+      source: 'caixa',
+      date: new Date().toLocaleString(),
+    };
 
-      await AsyncStorage.setItem('boxes', JSON.stringify(updatedBoxes));
+    const storedTransactions = await AsyncStorage.getItem('transactions');
+    const transactions = storedTransactions ? JSON.parse(storedTransactions) : [];
+    transactions.push(newTransaction);
+    await AsyncStorage.setItem('transactions', JSON.stringify(transactions));
 
-      alert(`Adicionado à caixinha: R$ ${amount}`);
-      navigation.goBack();
-    } catch (error) {
-      console.error('Erro ao adicionar à caixinha:', error);
-      alert('Erro ao adicionar à caixinha. Tente novamente.');
-    }
+    alert(`Adicionado à caixinha: R$ ${amount}`);
+    navigation.goBack();
   };
 
-  // Função para retirar valor da caixinha
   const handleWithdrawFromBox = async () => {
     if (!amount || isNaN(amount)) {
       alert('Digite um valor válido.');
       return;
     }
 
-    try {
-      const storedBoxes = await AsyncStorage.getItem('boxes');
-      const boxes = storedBoxes ? JSON.parse(storedBoxes) : [];
+    const balance = await AsyncStorage.getItem('balance');
+    const updatedBalance = parseFloat(balance) + parseFloat(amount);
+    await AsyncStorage.setItem('balance', updatedBalance.toString());
 
-      const updatedBoxes = boxes.map((item) => {
-        if (item.id === box.id) {
-          item.balance = (item.balance || 0) - parseFloat(amount);
-        }
-        return item;
-      });
+    const newTransaction = {
+      amount: parseFloat(amount),
+      type: 'add',
+      source: 'caixa',
+      date: new Date().toLocaleString(),
+    };
 
-      await AsyncStorage.setItem('boxes', JSON.stringify(updatedBoxes));
+    const storedTransactions = await AsyncStorage.getItem('transactions');
+    const transactions = storedTransactions ? JSON.parse(storedTransactions) : [];
+    transactions.push(newTransaction);
+    await AsyncStorage.setItem('transactions', JSON.stringify(transactions));
 
-      alert(`Retirado da caixinha: R$ ${amount}`);
-      navigation.goBack();
-    } catch (error) {
-      console.error('Erro ao retirar da caixinha:', error);
-      alert('Erro ao retirar da caixinha. Tente novamente.');
-    }
+    alert(`Retirado da caixinha: R$ ${amount}`);
+    navigation.goBack();
+  };
+
+  const handleDeleteBox = async () => {
+    Alert.alert(
+      'Confirmar Exclusão',
+      `Você tem certeza de que deseja excluir a caixinha "${box.name}"?`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const storedBoxes = await AsyncStorage.getItem('boxes');
+              const boxes = storedBoxes ? JSON.parse(storedBoxes) : [];
+              const updatedBoxes = boxes.filter((item) => item.id !== box.id);
+
+              await AsyncStorage.setItem('boxes', JSON.stringify(updatedBoxes));
+              alert(`Caixinha "${box.name}" excluída com sucesso!`);
+
+              // Retorna à tela anterior, atualizando a lista de caixinhas
+              navigation.navigate('CaixaScreen', { reload: true });
+            } catch (error) {
+              console.error('Erro ao excluir caixinha:', error);
+              alert('Erro ao excluir a caixinha. Tente novamente.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
-    <Surface style={styles.container}>
-      <Card style={styles.card}>
-        <Card.Title
-          title={box.name}
-          subtitle={`Saldo Atual: R$ ${box.balance || 0}`}
-          titleStyle={styles.title}
-          subtitleStyle={styles.subtitle}
-        />
-        <Card.Content>
-          <Text style={styles.label}>Digite um valor:</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={amount}
-            onChangeText={setAmount}
-            placeholder="  "
-          />
-        </Card.Content>
-        <Card.Actions style={styles.actions}>
-          <TouchableOpacity onPress={handleAddToBox} style={[styles.actionButton, styles.addButton]}>
-            <Text style={styles.actionButtonText}>Adicionar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleWithdrawFromBox} style={[styles.actionButton, styles.withdrawButton]}>
-            <Text style={styles.actionButtonText}>Retirar</Text>
-          </TouchableOpacity>
-        </Card.Actions>
-      </Card>
-    </Surface>
+    <View style={styles.container}>
+      <Text style={styles.label}>Caixinha: {box.name}</Text>
+      <Text style={styles.label}>Valor:</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        value={amount}
+        onChangeText={setAmount}
+      />
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity onPress={handleAddToBox} style={[styles.actionButton, styles.addButton]}>
+          <Text style={styles.actionButtonText}>Adicionar à Caixinha</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleWithdrawFromBox} style={[styles.actionButton, styles.withdrawButton]}>
+          <Text style={styles.actionButtonText}>Retirar da Caixinha</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
+  
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#f5f5f5',
-  },
-  card: {
-    elevation: 4,
-    borderRadius: 10,
-    backgroundColor: '#ffffff',
-    padding: 16,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#777',
-    marginTop: 4,
+    padding: 20,
+    backgroundColor: '#fff',
   },
   label: {
-    fontSize: 16,
-    marginBottom: 10,
-    color: '#555',
+    fontSize: 18,
+    marginBottom: 15,
+    color: '#333',
   },
   input: {
     height: 45,
-    borderColor: '#ddd',
+    borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 8,
+    marginBottom: 20,
     paddingLeft: 10,
     fontSize: 16,
-    marginBottom: 20,
-    backgroundColor: '#fafafa',
   },
-  actions: {
+  buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
+    justifyContent: 'space-between', // Ajusta os botões para ficarem afastados
   },
   actionButton: {
-    flex: 1,
-    padding: 12,
+    padding: 15,
     borderRadius: 8,
-    marginHorizontal: 5,
+    width: '48%', // Para garantir que os botões não fiquem muito largos
     alignItems: 'center',
   },
   actionButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
+    color: '#fff',
+    fontSize: 18,
     fontWeight: 'bold',
   },
   addButton: {
-    backgroundColor: '#a547bf',
+    backgroundColor: '#a445bd',
   },
   withdrawButton: {
-    backgroundColor: '#d0bcff',
+    backgroundColor: '#a445bd',
+  },
+  deleteButton: {
+    backgroundColor: '#ff4d4d',
   },
 });

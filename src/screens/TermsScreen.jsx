@@ -1,20 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
 import { View, Text, ScrollView, Alert, StyleSheet, TouchableOpacity } from "react-native";
-import { Checkbox } from "react-native-paper";
 
 export default function TermsScreen({ navigation }) {
-  const [termosAceitos, setTermosAceitos] = useState(false);
 
-  const handleAceitarTermos = () => {
-    if (termosAceitos) {
-      navigation.goBack();
-    } else {
-      Alert.alert("Atenção", "Você precisa aceitar os termos para continuar.");
-    }
-  };
-
-  const openTermsScreen = () => {
-    navigation.navigate("TermsScreen");
+  const handleContinuar = () => {
+    // Navega para a tela "PerfilScreen"
+    navigation.navigate("PerfilScreen");
   };
 
   return (
@@ -43,61 +34,15 @@ export default function TermsScreen({ navigation }) {
             5. Alterações nos Termos{"\n"}
             Reservamo-nos o direito de alterar os termos a qualquer momento, com aviso prévio de 30
             dias. A continuidade do uso do aplicativo após essas mudanças implica aceitação das
-            novas condições.{"\n\n"}
-            Política de Privacidade{"\n\n"}
-            1. Coleta de Dados Pessoais{"\n"}
-            Coletamos informações como nome, e-mail, e detalhes financeiros para a criação de conta
-            e o uso das funcionalidades do aplicativo. Essas informações são necessárias para a
-            execução dos serviços.{"\n\n"}
-            2. Uso dos Dados{"\n"}
-            Os dados pessoais coletados serão usados para criar e gerenciar a conta do usuário, bem
-            como permitir o uso de funcionalidades como adicionar e retirar fundos e organizar
-            eventos.{"\n\n"}
-            3. Compartilhamento de Dados{"\n"}
-            Os dados pessoais não serão compartilhados com terceiros, exceto quando exigido por
-            lei.{"\n\n"}
-            4. Segurança dos Dados{"\n"}
-            Implementamos medidas de segurança para proteger as informações pessoais contra acesso
-            não autorizado, alteração ou divulgação.{"\n\n"}
-            5. Retenção de Dados{"\n"}
-            Os dados pessoais serão mantidos enquanto o usuário tiver uma conta ativa no aplicativo
-            ou pelo tempo necessário para cumprir obrigações legais.{"\n\n"}
-            6. Direitos do Usuário (Conformidade com a LGPD){"\n"}
-            De acordo com a LGPD, o usuário tem o direito de acessar, corrigir, excluir ou solicitar
-            a portabilidade de seus dados pessoais. O usuário também pode revogar seu consentimento
-            a qualquer momento, o que pode resultar na limitação de funcionalidades do aplicativo.{"\n\n"}
-            7. Contato{"\n"}
-            Para exercer seus direitos de privacidade ou para qualquer questão relativa ao
-            tratamento de dados, entre em contato conosco pelo [inserir e-mail de contato].{"\n\n"}
+            novas condições.
           </Text>
         </ScrollView>
 
-        {/* Checkbox e botão */}
-        <View style={styles.termsContainer}>
-          <Checkbox
-            status={termosAceitos ? "checked" : "unchecked"}
-            onPress={() => setTermosAceitos(!termosAceitos)}
-            color="#a767c6"
-          />
-          <Text style={styles.termsCheckboxText}>Eu concordo com os Termos de Uso</Text>
-        </View>
-
         <TouchableOpacity
-          style={[
-            styles.button,
-            { backgroundColor: termosAceitos ? "#a767c6" : "#ddd" },
-          ]}
-          onPress={handleAceitarTermos}
-          disabled={!termosAceitos}
+          style={styles.button}
+          onPress={handleContinuar}
         >
-          <Text
-            style={[
-              styles.buttonText,
-              { color: termosAceitos ? "#ffffff" : "#aaa" },
-            ]}
-          >
-            Aceitar e Continuar
-          </Text>
+          <Text style={styles.buttonText}>Continuar</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -142,23 +87,16 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: "#4a4a4a",
   },
-  termsContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  termsCheckboxText: {
-    fontSize: 16,
-    color: "#4a4a4a",
-  },
   button: {
     paddingVertical: 12,
     borderRadius: 25,
     alignItems: "center",
     marginTop: 10,
+    backgroundColor: "#a767c6",
   },
   buttonText: {
     fontSize: 18,
     fontWeight: "bold",
+    color: "#ffffff",
   },
 });

@@ -29,6 +29,14 @@ export default function CaixaScreen({ navigation }) {
     }, [])
   );
 
+  const formatBalance = (balance) => {
+    // Se o saldo for undefined ou null, retorna 0
+    if (balance === undefined || balance === null) {
+      return "0.00";
+    }
+    return balance.toFixed(2); // Exibe o saldo com duas casas decimais
+  };
+
   // Função para excluir uma caixinha
   const handleDeleteBox = async (boxId) => {
     try {
@@ -48,6 +56,30 @@ export default function CaixaScreen({ navigation }) {
     }
   };
 
+  // Função para atualizar o saldo de uma caixinha
+  const updateBoxBalance = async (boxId, newBalance) => {
+    try {
+      const storedBoxes = await AsyncStorage.getItem('boxes');
+      const boxes = storedBoxes ? JSON.parse(storedBoxes) : [];
+
+      // Encontra a caixinha a ser atualizada
+      const updatedBoxes = boxes.map((box) => {
+        if (box.id === boxId) {
+          box.balance = newBalance;
+        }
+        return box;
+      });
+
+      // Atualiza o AsyncStorage com os novos saldos
+      await AsyncStorage.setItem('boxes', JSON.stringify(updatedBoxes));
+
+      // Atualiza o estado local
+      setBoxes(updatedBoxes);
+    } catch (error) {
+      console.error('Erro ao atualizar o saldo da caixinha:', error);
+    }
+  };
+
   return (
     <Surface style={styles.container}>
       <ScrollView contentContainerStyle={styles.innerContainer}>
@@ -58,13 +90,13 @@ export default function CaixaScreen({ navigation }) {
             <Card key={box.id} style={styles.card}>
               <Card.Title
                 title={box.name}
-                subtitle={`Saldo: R$ ${box.balance || 0}`}
+                subtitle={`Saldo: R$ ${formatBalance(box.balance)}`}
                 titleStyle={styles.cardTitle}
                 subtitleStyle={styles.cardSubtitle}
               />
               <Card.Actions style={styles.cardActions}>
                 <Button
-                  onPress={() => navigation.navigate('CaixaDetailsScreen', { box })}
+                  onPress={() => navigation.navigate('CaixaDetailsScreen', { box, updateBoxBalance })}
                   mode="contained"
                   style={styles.detailsButton}
                   labelStyle={styles.buttonText}
